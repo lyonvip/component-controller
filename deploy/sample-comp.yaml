@@ -1,0 +1,67 @@
+---
+apiVersion: comp.base.io/v1
+kind: Component
+metadata:
+  labels:
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: component-controller
+    app.kuberentes.io/to-controll: mysql-server
+  name: aic-mysql-server
+  namespace: component
+spec:
+  type: mysql
+  namespace: component
+  enableNodePort: true
+  loginUser: aic
+  loginPass: Aic@2024!
+  serverImage: harbor.lclouds.info/library/mysql:8.0.35
+  # 整颗cpu使用整数表示，非整颗使用m单位表示，如"1","2","800m","1200m"
+  # 整颗不能使用"1000m","2000m", 非整颗也不能使用".5",".4"
+  serverCpuResource: "800m"
+  serverMemResource: 1Gi
+  sidecarImage: harbor.lclouds.info/library/percona-xtrabackup:8.0.35-dev
+  nodeSelector:
+    app: component
+---
+apiVersion: comp.base.io/v1
+kind: Component
+metadata:
+  labels:
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: component-controller
+    app.kuberentes.io/to-controll: redis-server
+  name: aic-redis-server
+  namespace: component
+spec:
+  type: redis
+  namespace: component
+  enableNodePort: true
+  loginUser: aic
+  loginPass: Aic@2024!
+  serverImage: harbor.lclouds.info/library/redis:6.2
+  serverCpuResource: "300m"
+  serverMemResource: 500Mi
+  sidecarImage: harbor.lclouds.info/library/redis-dump:0.4.0
+  nodeSelector:
+    app: component
+---
+apiVersion: comp.base.io/v1
+kind: Component
+metadata:
+  labels:
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: component-controller
+    app.kuberentes.io/to-controll: rabbitmq-server
+  name: aic-rabbitmq-server
+  namespace: component
+spec:
+  type: rabbitmq
+  namespace: component
+  enableNodePort: true
+  loginUser: aic
+  loginPass: Aic@2024!
+  serverImage: harbor.lclouds.info/library/rabbitmq:3.11.10
+  serverCpuResource: "300m"
+  serverMemResource: 500Mi
+  nodeSelector:
+    app: component

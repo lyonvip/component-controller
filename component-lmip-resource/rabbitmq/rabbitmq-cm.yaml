@@ -1,0 +1,21 @@
+apiVersion: v1
+data:
+  enabled_plugins: '[rabbitmq_management,rabbitmq_prometheus].'
+  rabbitmq.conf: |-
+    loopback_users.guest = false
+    listeners.tcp.default = 5672
+    management.tcp.port = 15672
+    default_user = neolink
+    default_pass = Ne01ink2022!
+kind: ConfigMap
+metadata:
+  annotations:
+    meta.helm.sh/release-name: base-builder
+    meta.helm.sh/release-namespace: component
+  creationTimestamp: "2024-03-27T15:51:39Z"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: rabbitmq-config
+  namespace: component
+  resourceVersion: "3127"
+  uid: 3273f27a-e40a-4621-b941-06409cd34694

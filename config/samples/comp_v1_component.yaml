@@ -1,0 +1,12 @@
+apiVersion: comp.base.io/v1
+kind: Component
+metadata:
+  labels:
+    app.kubernetes.io/name: component
+    app.kubernetes.io/instance: component-sample
+    app.kubernetes.io/part-of: component-controller
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: component-controller
+  name: component-sample
+spec:
+  # TODO(user): Add fields here

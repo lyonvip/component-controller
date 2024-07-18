@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: base-builder
+    meta.helm.sh/release-namespace: component
+  creationTimestamp: "2024-03-27T15:51:39Z"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: mongodb-server-svc
+  namespace: component
+  resourceVersion: "212987"
+  uid: b8332c53-fd90-4e27-a9e2-4104c1071445
+spec:
+  clusterIP: 10.43.189.234
+  clusterIPs:
+  - 10.43.189.234
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: mongodb
+    nodePort: 27017
+    port: 27017
+    protocol: TCP
+    targetPort: 27017
+  selector:
+    app: mongodb
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}

@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: base-builder
+    meta.helm.sh/release-namespace: component
+  creationTimestamp: "2024-03-27T15:51:39Z"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: kafka-server-svc
+  namespace: component
+  resourceVersion: "213063"
+  uid: f8e232dd-3db5-4f0b-9474-ff8afa58c58b
+spec:
+  clusterIP: 10.43.198.113
+  clusterIPs:
+  - 10.43.198.113
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: kafka
+    nodePort: 9092
+    port: 9092
+    protocol: TCP
+    targetPort: 9092
+  - name: zookeeper
+    nodePort: 2181
+    port: 2181
+    protocol: TCP
+    targetPort: 2181
+  selector:
+    app: kafka
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}

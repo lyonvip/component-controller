@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-server
+  namespace: {{ .Spec.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - env:
+            - name: ALLOW_ANONYMOUS_LOGIN
+              value: "yes"
+            - name: ZK_USER
+              valueFrom:
+                secretKeyRef:
+                  key: kafka_acl_username
+                  name: kafka-auth
+            - name: ZK_PASS
+              valueFrom:
+                secretKeyRef:
+                  key: kafka_acl_password
+                  name: kafka-auth
+          image: {{ .Spec.SidecarImage }}
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - until nc -z localhost 2181; do sleep 1; done && zookeeper-acl -g ${ZK_USER}:${ZK_PASS}
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 2181
+            timeoutSeconds: 5
+          name: kafka-sidecar
+          ports:
+            - containerPort: 2181
+              name: zookeeper
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 2181
+            timeoutSeconds: 5
+          volumeMounts:
+            - mountPath: /bitnami
+              name: zookeeper-data
+            - mountPath: /etc/localtime
+              name: localtime
+              readOnly: true
+        - env:
+            - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+              value: 127.0.0.1:2181
+          image: {{ .Spec.ServerImage }}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 9092
+            timeoutSeconds: 5
+          name: kafka-server
+          ports:
+            - containerPort: 9092
+              name: kafka
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 9092
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: "{{ .Spec.ServerCpuResource }}"
+              memory: "{{ .Spec.ServerMemResource }}"
+            requests:
+              cpu: "{{ .Spec.ServerCpuResource }}"
+              memory: "{{ .Spec.ServerMemResource }}"
+          volumeMounts:
+            - mountPath: /bitnami
+              name: kafka-data
+            - mountPath: /etc/localtime
+              name: localtime
+              readOnly: true
+      nodeSelector:
+        {{- range $k,$v := .Spec.NodeSelector }}
+        {{ $k }}: {{ $v }}
+        {{- end }}
+      volumes:
+        - hostPath:
+            path: /data/server/kafka-server/zookeeper
+            type: DirectoryOrCreate
+          name: zookeeper-data
+        - hostPath:
+            path: /data/server/kafka-server/kafka
+            type: DirectoryOrCreate
+          name: kafka-data
+        - hostPath:
+            path: /etc/localtime
+            type: File
+          name: localtime

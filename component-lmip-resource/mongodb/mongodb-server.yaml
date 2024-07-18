@@ -1,0 +1,152 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "2"
+    meta.helm.sh/release-name: base-builder
+    meta.helm.sh/release-namespace: component
+  creationTimestamp: "2024-03-27T15:51:39Z"
+  generation: 4
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: mongodb-server
+  namespace: component
+  resourceVersion: "7449"
+  uid: 5d00adfc-b5a5-449c-b5d0-5ad39cfe0291
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: mongodb
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - env:
+        - name: MONGODB_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: mongodb_root_user
+              name: mongodb-password
+        - name: MONGODB_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mongodb_root_pass
+              name: mongodb-password
+        image: harbor.lclouds.info:3443/library/mongodb-community-server:7.0.4-ubuntu2204
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 27017
+          timeoutSeconds: 5
+        name: mongodb-server
+        ports:
+        - containerPort: 27017
+          name: mongodb
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 27017
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: "2"
+            memory: 1Gi
+          requests:
+            cpu: "2"
+            memory: 1Gi
+        securityContext:
+          runAsGroup: 0
+          runAsUser: 0
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /data/db
+          name: mongodb-data
+        - mountPath: /etc/localtime
+          name: localtime
+          readOnly: true
+      - command:
+        - /bin/sh
+        - -c
+        - tail -f /dev/null
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: mongodb_root_user
+              name: mongodb-password
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: mongodb_root_pass
+              name: mongodb-password
+        image: harbor.lclouds.info:3443/library/mongodb-dump:100.9.4
+        imagePullPolicy: IfNotPresent
+        name: mongodb-bak
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/backups
+          name: mongodb-bak
+        - mountPath: /etc/localtime
+          name: localtime
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        app: component
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 15
+      volumes:
+      - hostPath:
+          path: /data/server/mongodb-server
+          type: DirectoryOrCreate
+        name: mongodb-data
+      - hostPath:
+          path: /data/backup/mongodb-server
+          type: DirectoryOrCreate
+        name: mongodb-bak
+      - hostPath:
+          path: /etc/localtime
+          type: File
+        name: localtime
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2024-03-27T15:51:39Z"
+    lastUpdateTime: "2024-03-27T16:09:38Z"
+    message: ReplicaSet "mongodb-server-c987f4c8f" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2024-03-27T16:11:00Z"
+    lastUpdateTime: "2024-03-27T16:11:00Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 4
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

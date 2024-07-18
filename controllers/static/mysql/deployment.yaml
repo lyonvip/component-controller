@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-server
+  namespace: {{ .Spec.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql_root_password
+                  name: mysql-auth
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  key: mysql_prod_username
+                  name: mysql-auth
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql_prod_password
+                  name: mysql-auth
+          image: {{ .Spec.ServerImage }}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - -uroot
+                - -p${MYSQL_ROOT_PASSWORD}
+                - ping
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: mysql-server
+          ports:
+            - containerPort: 3306
+              name: mysql
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - -uroot
+                - -p${MYSQL_ROOT_PASSWORD}
+                - ping
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: "{{ .Spec.ServerCpuResource }}"
+              memory: "{{ .Spec.ServerMemResource }}"
+            requests:
+              cpu: "{{ .Spec.ServerCpuResource }}"
+              memory: "{{ .Spec.ServerMemResource }}"
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mysql-data
+            - mountPath: /etc/localtime
+              name: localtime
+              readOnly: true
+            - mountPath: /etc/mysql/my.cnf
+              name: mysql-config
+              subPath: my.cnf
+        - command:
+            - /bin/sh
+            - -c
+            - tail -f /dev/null
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql_root_password
+                  name: mysql-auth
+          image: {{ .Spec.SidecarImage }}
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - until [ $(dialer) -eq 1 ] ; do sleep 1; done && mysql -h127.0.0.1 -uroot -p${MYSQL_ROOT_PASSWORD} -e 'grant all privileges on *.* to "{{ .Spec.LoginUser }}"@"%"; alter user "{{ .Spec.LoginUser }}"@"%" identified with mysql_native_password by "{{ .Spec.LoginPass }}";flush privileges;'
+          name: mysql-sidecar
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mysql-data
+            - mountPath: /backup
+              name: mysql-bak
+            - mountPath: /etc/localtime
+              name: localtime
+              readOnly: true
+      nodeSelector:
+        {{- range $k,$v := .Spec.NodeSelector }}
+        {{ $k }}: {{ $v }}
+        {{- end }}
+      volumes:
+        - hostPath:
+            path: /data/server/mysql-server
+            type: DirectoryOrCreate
+          name: mysql-data
+        - hostPath:
+            path: /data/backup/mysql-server
+            type: DirectoryOrCreate
+          name: mysql-bak
+        - configMap:
+            defaultMode: 420
+            name: mysql-config
+          name: mysql-config
+        - hostPath:
+            path: /etc/localtime
+            type: File
+          name: localtime

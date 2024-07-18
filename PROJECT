@@ -1,0 +1,16 @@
+domain: base.io
+layout:
+- go.kubebuilder.io/v3
+projectName: component-controller
+repo: component-controller
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: base.io
+  group: comp
+  kind: Component
+  path: component-controller/api/v1
+  version: v1
+version: "3"

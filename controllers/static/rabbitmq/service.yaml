@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-server-svc
+  namespace: {{ .Spec.Namespace }}
+spec:
+  ports:
+    - name: rabbitmq
+      {{ if .Spec.EnableNodePort -}}
+      nodePort: 5672
+      {{ end -}}
+      port: 5672
+      protocol: TCP
+      targetPort: 5672
+    - name: rabbitmq-mgmt
+      {{ if .Spec.EnableNodePort -}}
+      nodePort: 15672
+      {{ end -}}
+      port: 15672
+      protocol: TCP
+      targetPort: 15672
+  selector:
+    app: rabbitmq
+  {{ if .Spec.EnableNodePort -}}
+  type: NodePort
+  {{ else -}}
+  type: ClusterIP
+  {{- end -}}

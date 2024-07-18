@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-server-svc
+  namespace: {{ .Spec.Namespace }}
+spec:
+  ports:
+    - name: redis
+      {{ if .Spec.EnableNodePort -}}
+      nodePort: 6379
+      {{ end -}}
+      port: 6379
+      protocol: TCP
+      targetPort: 6379
+  selector:
+    app: redis
+  {{ if .Spec.EnableNodePort -}}
+  type: NodePort
+  {{ else -}}
+  type: ClusterIP
+  {{- end -}}

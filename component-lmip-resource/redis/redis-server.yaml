@@ -1,0 +1,151 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "2"
+    meta.helm.sh/release-name: base-builder
+    meta.helm.sh/release-namespace: component
+  creationTimestamp: "2024-03-27T15:51:39Z"
+  generation: 4
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: redis-server
+  namespace: component
+  resourceVersion: "8377"
+  uid: 44a09e15-c8fc-4b35-8dda-78b30b5a86f0
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: redis
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: redis
+    spec:
+      containers:
+      - command:
+        - sh
+        - -c
+        - redis-server /etc/redis.conf --requirepass ${REDIS_DEFAULT_PASSWORD} --port
+          6379
+        env:
+        - name: REDIS_DEFAULT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis_default_password
+              name: redis-password
+        image: harbor.lclouds.info:3443/library/redis:6.2
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 6379
+          timeoutSeconds: 5
+        name: redis-server
+        ports:
+        - containerPort: 6379
+          name: redis
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 6379
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: "1"
+            memory: 1Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /data
+          name: redis-data
+        - mountPath: /etc/localtime
+          name: localtime
+          readOnly: true
+        - mountPath: /etc/redis.conf
+          name: redis-config
+          subPath: redis.conf
+      - command:
+        - /bin/sh
+        - -c
+        - tail -f /dev/null
+        env:
+        - name: REDIS_DEFAULT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: redis_default_password
+              name: redis-password
+        image: harbor.lclouds.info:3443/library/redis-dump:0.4.0
+        imagePullPolicy: IfNotPresent
+        name: redis-bak
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/backups
+          name: redis-bak
+        - mountPath: /etc/localtime
+          name: localtime
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        app: component
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 15
+      volumes:
+      - hostPath:
+          path: /data/server/redis-server
+          type: DirectoryOrCreate
+        name: redis-data
+      - hostPath:
+          path: /data/backup/redis-server
+          type: DirectoryOrCreate
+        name: redis-bak
+      - configMap:
+          defaultMode: 420
+          name: redis-config
+        name: redis-config
+      - hostPath:
+          path: /etc/localtime
+          type: File
+        name: localtime
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2024-03-27T15:51:39Z"
+    lastUpdateTime: "2024-03-27T16:14:16Z"
+    message: ReplicaSet "redis-server-59467c959d" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2024-03-27T16:14:50Z"
+    lastUpdateTime: "2024-03-27T16:14:50Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 4
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

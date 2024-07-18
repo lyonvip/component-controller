@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    meta.helm.sh/release-name: base-builder
+    meta.helm.sh/release-namespace: component
+  creationTimestamp: "2024-03-27T15:51:39Z"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: rabbitmq-server-svc
+  namespace: component
+  resourceVersion: "212876"
+  uid: f33ec760-ef4c-481d-b811-63b077b4a5a5
+spec:
+  clusterIP: 10.43.108.248
+  clusterIPs:
+  - 10.43.108.248
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: rabbitmq
+    nodePort: 5672
+    port: 5672
+    protocol: TCP
+    targetPort: 5672
+  - name: rabbitmq-mgmt
+    nodePort: 15672
+    port: 15672
+    protocol: TCP
+    targetPort: 15672
+  selector:
+    app: rabbitmq
+  sessionAffinity: None
+  type: NodePort
+status:
+  loadBalancer: {}

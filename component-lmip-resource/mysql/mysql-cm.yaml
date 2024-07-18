@@ -1,0 +1,27 @@
+apiVersion: v1
+data:
+  my.cnf: |-
+    [mysql]
+    prompt="\u@mysqldb \R:\m:\s [\d]> "
+
+    [mysqld]
+    character-set-server = utf8mb4
+    open_files_limit  = 65535
+    max_connections = 10000
+    max_connect_errors = 1000000
+
+    [mysqldump]
+    quick
+    max_allowed_packet = 32M
+kind: ConfigMap
+metadata:
+  annotations:
+    meta.helm.sh/release-name: base-builder
+    meta.helm.sh/release-namespace: component
+  creationTimestamp: "2024-03-27T15:51:39Z"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: mysql-config
+  namespace: component
+  resourceVersion: "3125"
+  uid: c484de97-b329-48be-985a-bc024fd5594a

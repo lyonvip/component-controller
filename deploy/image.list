@@ -1,0 +1,7 @@
+harbor.lclouds.info/library/kube-rbac-proxy:v0.13.0
+harbor.lclouds.info/library/component-controller:v1beta
+harbor.lclouds.info/library/mysql:8.0.35
+harbor.lclouds.info/library/percona-xtrabackup:8.0.35-dev
+harbor.lclouds.info/library/redis:6.2
+harbor.lclouds.info/library/redis-dump:0.4.0
+harbor.lclouds.info/library/rabbitmq:3.11.10

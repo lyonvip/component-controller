@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq-server
+  namespace: {{ .Spec.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  key: rabbitmq_username
+                  name: rabbitmq-auth
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  key: rabbitmq_password
+                  name: rabbitmq-auth
+          image: {{ .Spec.ServerImage }}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 5672
+            timeoutSeconds: 5
+          name: rabbitmq-server
+          ports:
+            - containerPort: 5672
+              name: rabbitmq
+              protocol: TCP
+            - containerPort: 15672
+              name: rabbitmq-mgmt
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 5672
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: "{{ .Spec.ServerCpuResource }}"
+              memory: "{{ .Spec.ServerMemResource }}"
+            requests:
+              cpu: "{{ .Spec.ServerCpuResource }}"
+              memory: "{{ .Spec.ServerMemResource }}"
+          volumeMounts:
+            - mountPath: /var/lib/rabbitmq
+              name: rabbitmq-data
+            - mountPath: /etc/rabbitmq
+              name: rabbitmq-config
+      nodeSelector:
+        {{- range $k,$v := .Spec.NodeSelector }}
+        {{ $k }}: {{ $v }}
+        {{- end }}
+      volumes:
+        - hostPath:
+            path: /data/server/rabbitmq-server
+            type: DirectoryOrCreate
+          name: rabbitmq-data
+        - configMap:
+            defaultMode: 420
+            name: rabbitmq-config
+          name: rabbitmq-config

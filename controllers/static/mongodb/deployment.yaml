@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-server
+  namespace: {{ .Spec.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+        - env:
+            - name: MONGODB_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: mongodb_root_user
+                  name: mongodb-auth
+            - name: MONGODB_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mongodb_root_pass
+                  name: mongodb-auth
+          image: {{ .Spec.ServerImage }}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 27017
+            timeoutSeconds: 5
+          name: mongodb-server
+          ports:
+            - containerPort: 27017
+              name: mongodb
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 27017
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: "{{ .Spec.ServerCpuResource }}"
+              memory: "{{ .Spec.ServerMemResource }}"
+            requests:
+              cpu: "{{ .Spec.ServerCpuResource }}"
+              memory: "{{ .Spec.ServerMemResource }}"
+          securityContext:
+            runAsGroup: 0
+            runAsUser: 0
+          volumeMounts:
+            - mountPath: /data/db
+              name: mongodb-data
+            - mountPath: /etc/localtime
+              name: localtime
+              readOnly: true
+        - command:
+            - /bin/sh
+            - -c
+            - tail -f /dev/null
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: mongodb_root_user
+                  name: mongodb-auth
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mongodb_root_pass
+                  name: mongodb-auth
+          image: {{ .Spec.SidecarImage }}
+          imagePullPolicy: IfNotPresent
+          name: mongodb-sidecar
+          volumeMounts:
+            - mountPath: /var/backups
+              name: mongodb-bak
+            - mountPath: /etc/localtime
+              name: localtime
+              readOnly: true
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        {{- range $k,$v := .Spec.NodeSelector }}
+        {{ $k }}: {{ $v }}
+        {{- end }}
+      volumes:
+        - hostPath:
+            path: /data/server/mongodb-server
+            type: DirectoryOrCreate
+          name: mongodb-data
+        - hostPath:
+            path: /data/backup/mongodb-server
+            type: DirectoryOrCreate
+          name: mongodb-bak
+        - hostPath:
+            path: /etc/localtime
+            type: File
+          name: localtime

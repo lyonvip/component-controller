@@ -1,0 +1,9 @@
+harbor.lclouds.info:3443/library/kafka:3.4
+harbor.lclouds.info:3443/library/mongodb-community-server:7.0.4-ubuntu2204
+harbor.lclouds.info:3443/library/mongodb-dump:100.9.4
+harbor.lclouds.info:3443/library/mysql:8.0.35
+harbor.lclouds.info:3443/library/percona-xtrabackup:8.0.35-dev
+harbor.lclouds.info:3443/library/rabbitmq:3.11.10
+harbor.lclouds.info:3443/library/redis-dump:0.4.0
+harbor.lclouds.info:3443/library/redis:6.2
+harbor.lclouds.info:3443/library/zookeeper:3.9-acl

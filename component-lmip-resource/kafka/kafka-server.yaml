@@ -1,0 +1,168 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"9","meta.helm.sh/release-name":"base-builder","meta.helm.sh/release-namespace":"component"},"labels":{"app.kubernetes.io/managed-by":"Helm"},"name":"kafka-server","namespace":"component"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app":"kafka"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"labels":{"app":"kafka"}},"spec":{"containers":[{"env":[{"name":"ALLOW_ANONYMOUS_LOGIN","value":"yes"},{"name":"ZK_USER","valueFrom":{"secretKeyRef":{"key":"kafka_acl_username","name":"kafka-password"}}},{"name":"ZK_PASS","valueFrom":{"secretKeyRef":{"key":"kafka_acl_password","name":"kafka-password"}}}],"image":"harbor.lclouds.info:3443/library/zookeeper:3.9-acl","imagePullPolicy":"IfNotPresent","lifecycle":{"postStart":{"exec":{"command":["/bin/sh","-c","until nc -z localhost 2181; do sleep 1; done \u0026\u0026 zookeeper-acl -g ${ZK_USER}:${ZK_PASS}"]}}},"livenessProbe":{"failureThreshold":3,"initialDelaySeconds":30,"periodSeconds":10,"successThreshold":1,"tcpSocket":{"port":2181},"timeoutSeconds":5},"name":"zookeeper","ports":[{"containerPort":2181,"name":"zookeeper","protocol":"TCP"}],"readinessProbe":{"failureThreshold":3,"initialDelaySeconds":30,"periodSeconds":10,"successThreshold":1,"tcpSocket":{"port":2181},"timeoutSeconds":5},"resources":{},"securityContext":{"runAsGroup":0,"runAsUser":0},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/bitnami","name":"zookeeper-data"},{"mountPath":"/etc/localtime","name":"localtime","readOnly":true}]},{"env":[{"name":"KAFKA_CFG_ZOOKEEPER_CONNECT","value":"127.0.0.1:2181"}],"image":"harbor.lclouds.info:3443/library/kafka:3.4","imagePullPolicy":"IfNotPresent","livenessProbe":{"failureThreshold":3,"initialDelaySeconds":30,"periodSeconds":10,"successThreshold":1,"tcpSocket":{"port":9092},"timeoutSeconds":5},"name":"kafka","ports":[{"containerPort":9092,"name":"kafka","protocol":"TCP"}],"readinessProbe":{"failureThreshold":3,"initialDelaySeconds":30,"periodSeconds":10,"successThreshold":1,"tcpSocket":{"port":9092},"timeoutSeconds":5},"resources":{},"securityContext":{"runAsGroup":0,"runAsUser":0},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/bitnami","name":"kafka-data"},{"mountPath":"/etc/localtime","name":"localtime","readOnly":true}]}],"dnsPolicy":"ClusterFirst","nodeSelector":{"app":"component"},"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"terminationGracePeriodSeconds":15,"volumes":[{"hostPath":{"path":"/data/server/kafka-server/zookeeper","type":"DirectoryOrCreate"},"name":"zookeeper-data"},{"hostPath":{"path":"/data/server/kafka-server/kafka","type":"DirectoryOrCreate"},"name":"kafka-data"},{"hostPath":{"path":"/etc/localtime","type":"File"},"name":"localtime"}]}}}}
+    meta.helm.sh/release-name: base-builder
+    meta.helm.sh/release-namespace: component
+  creationTimestamp: "2024-03-27T16:06:40Z"
+  generation: 1
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: kafka-server
+  namespace: component
+  resourceVersion: "6605"
+  uid: 1534a74f-2bbd-4580-a662-53a85c38b4a5
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: kafka
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: kafka
+    spec:
+      containers:
+      - env:
+        - name: ALLOW_ANONYMOUS_LOGIN
+          value: "yes"
+        - name: ZK_USER
+          valueFrom:
+            secretKeyRef:
+              key: kafka_acl_username
+              name: kafka-password
+        - name: ZK_PASS
+          valueFrom:
+            secretKeyRef:
+              key: kafka_acl_password
+              name: kafka-password
+        image: harbor.lclouds.info:3443/library/zookeeper:3.9-acl
+        imagePullPolicy: IfNotPresent
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - until nc -z localhost 2181; do sleep 1; done && zookeeper-acl -g ${ZK_USER}:${ZK_PASS}
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 2181
+          timeoutSeconds: 5
+        name: zookeeper
+        ports:
+        - containerPort: 2181
+          name: zookeeper
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 2181
+          timeoutSeconds: 5
+        resources: {}
+        securityContext:
+          runAsGroup: 0
+          runAsUser: 0
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /bitnami
+          name: zookeeper-data
+        - mountPath: /etc/localtime
+          name: localtime
+          readOnly: true
+      - env:
+        - name: KAFKA_CFG_ZOOKEEPER_CONNECT
+          value: 127.0.0.1:2181
+        image: harbor.lclouds.info:3443/library/kafka:3.4
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 9092
+          timeoutSeconds: 5
+        name: kafka
+        ports:
+        - containerPort: 9092
+          name: kafka
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 9092
+          timeoutSeconds: 5
+        resources: {}
+        securityContext:
+          runAsGroup: 0
+          runAsUser: 0
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /bitnami
+          name: kafka-data
+        - mountPath: /etc/localtime
+          name: localtime
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        app: component
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 15
+      volumes:
+      - hostPath:
+          path: /data/server/kafka-server/zookeeper
+          type: DirectoryOrCreate
+        name: zookeeper-data
+      - hostPath:
+          path: /data/server/kafka-server/kafka
+          type: DirectoryOrCreate
+        name: kafka-data
+      - hostPath:
+          path: /etc/localtime
+          type: File
+        name: localtime
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2024-03-27T16:07:20Z"
+    lastUpdateTime: "2024-03-27T16:07:20Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  - lastTransitionTime: "2024-03-27T16:06:40Z"
+    lastUpdateTime: "2024-03-27T16:07:20Z"
+    message: ReplicaSet "kafka-server-8fc4c6ffc" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  observedGeneration: 1
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

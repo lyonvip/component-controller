@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-server
+  namespace: {{ .Spec.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - command:
+            - sh
+            - -c
+            - redis-server /etc/redis.conf --requirepass ${REDIS_DEFAULT_PASSWORD} --port 6379
+          env:
+            - name: REDIS_DEFAULT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: redis_default_password
+                  name: redis-auth
+            - name: REDIS_PROD_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: redis_prod_username
+                  name: redis-auth
+            - name: REDIS_PROD_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: redis_prod_password
+                  name: redis-auth
+          image: {{ .Spec.ServerImage }}
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - redis-cli -a ${REDIS_DEFAULT_PASSWORD} acl setuser ${REDIS_PROD_USERNAME} on \>${REDIS_PROD_PASSWORD} ~* +@all -keys
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 6379
+            timeoutSeconds: 5
+          name: redis-server
+          ports:
+            - containerPort: 6379
+              name: redis
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 6379
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: "{{ .Spec.ServerCpuResource }}"
+              memory: "{{ .Spec.ServerMemResource }}"
+            requests:
+              cpu: "{{ .Spec.ServerCpuResource }}"
+              memory: "{{ .Spec.ServerMemResource }}"
+          volumeMounts:
+            - mountPath: /data
+              name: redis-data
+            - mountPath: /etc/localtime
+              name: localtime
+              readOnly: true
+            - mountPath: /etc/redis.conf
+              name: redis-config
+              subPath: redis.conf
+        - command:
+            - /bin/sh
+            - -c
+            - tail -f /dev/null
+          env:
+            - name: REDIS_DEFAULT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: redis_default_password
+                  name: redis-auth
+          image: {{ .Spec.SidecarImage }}
+          imagePullPolicy: IfNotPresent
+          name: redis-sidecar
+          volumeMounts:
+            - mountPath: /var/backups
+              name: redis-bak
+            - mountPath: /etc/localtime
+              name: localtime
+              readOnly: true
+      nodeSelector:
+        {{- range $k,$v := .Spec.NodeSelector }}
+        {{ $k }}: {{ $v }}
+        {{- end }}
+      volumes:
+        - hostPath:
+            path: /data/server/redis-server
+            type: DirectoryOrCreate
+          name: redis-data
+        - hostPath:
+            path: /data/backup/redis-server
+            type: DirectoryOrCreate
+          name: redis-bak
+        - configMap:
+            defaultMode: 420
+            name: redis-config
+          name: redis-config
+        - hostPath:
+            path: /etc/localtime
+            type: File
+          name: localtime
